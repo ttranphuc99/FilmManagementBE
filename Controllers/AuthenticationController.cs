@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using FilmManagement_BE.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace FilmManagement_BE.Controllers
 {
@@ -58,6 +59,21 @@ namespace FilmManagement_BE.Controllers
             result.Token = this.GenerateJSONWebToken(result);
 
             return Created("", result);
+        }
+
+        [HttpGet("api/logout")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult Logout()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            if (_service.Logout(userId))
+            {
+                return Ok();
+            }
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Processing Failed" });
         }
 
         [Authorize(Roles = "1", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

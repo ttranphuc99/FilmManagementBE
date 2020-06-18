@@ -52,6 +52,21 @@ namespace FilmManagement_BE.Services
             return result;
         }
 
+        public bool Logout(int userId) 
+        {
+            Account account = _context.Account.Where(record => record.Id == userId).FirstOrDefault();
+
+            if (account != null)
+            {
+                account.DeviceToken = null;
+                _context.Entry(account).State = EntityState.Modified;
+                _context.SaveChanges();
+                return true;
+            }
+
+            return false;
+        }
+
         public AccountVModel Register(Account account)
         {
             AccountVModel result = null;
