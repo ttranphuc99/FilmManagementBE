@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FilmManagement_BE.Models;
 using FilmManagement_BE.ViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace FilmManagement_BE.Services
 {
@@ -22,7 +23,7 @@ namespace FilmManagement_BE.Services
             AccountVModel result = null;
             string username = account.Username;
             string password = account.Password;
-
+            System.Diagnostics.Debug.WriteLine("SomeText " + account.DeviceToken);
             Account dbAccount = _context.Account
                 .Where(record =>
                     record.Username == username
@@ -31,6 +32,10 @@ namespace FilmManagement_BE.Services
 
             if (dbAccount != null)
             {
+                dbAccount.DeviceToken = account.DeviceToken;
+                _context.Entry(dbAccount).State = EntityState.Modified;
+                _context.SaveChanges();
+
                 result = new AccountVModel()
                 {
                     Id = dbAccount.Id,
