@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using FilmManagement_BE.Services;
 using Microsoft.AspNetCore.Http;
+using FilmManagement_BE.Constants;
 
 namespace FilmManagement_BE.Controllers
 {
@@ -24,12 +25,14 @@ namespace FilmManagement_BE.Controllers
         private readonly FilmManagerContext _context;
         private readonly IConfiguration _config;
         private readonly LoginService _service;
+        private readonly AccountService _accountService;
 
         public AuthenticationController(FilmManagerContext context, IConfiguration config)
         {
             _context = context;
             _config = config;
             _service = new LoginService(_context);
+            _accountService = new AccountService(_context);
         }
 
         [AllowAnonymous]
@@ -43,22 +46,6 @@ namespace FilmManagement_BE.Controllers
                 return Ok(result);
             }
             return Unauthorized();
-        }
-
-        [AllowAnonymous]
-        [HttpPost("api/register")]
-        public ActionResult Register(Account account)
-        {
-            account.Role = 2;
-            if (_service.IsExistedUsername(account.Username))
-            {
-                return BadRequest(new { message = "Username is existed" });
-            }
-
-            var result = _service.Register(account);
-            result.Token = this.GenerateJSONWebToken(result);
-
-            return Created("", result);
         }
 
         [HttpGet("api/logout")]
@@ -76,7 +63,27 @@ namespace FilmManagement_BE.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Processing Failed" });
         }
 
-        [Authorize(Roles = "1", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost("api/change-password")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult ChangePassword(AccountVModel account)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            if (account.Password != null && account.Password.Trim().Length > 0)
+            {
+                if (_accountService.ChangePassword(userId, account.Password))
+                {
+                    return Ok();
+                }
+                return BadRequest("Process changing password failed");
+            }
+
+            return BadRequest("Cannot change password");
+        }
+
+        [Authorize(Roles = RoleConstants.DIRECTOR_STR, AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("api/add-director")]
         public ActionResult<AccountVModel> AddAdmin(Account account)
         {

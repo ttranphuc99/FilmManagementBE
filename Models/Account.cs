@@ -27,6 +27,7 @@ namespace FilmManagement_BE.Models
         public string Email { get; set; }
         public string DeviceToken { get; set; }
         public int? Role { get; set; }
+        public bool? Status { get; set; }
 
         public virtual ICollection<Equipment> EquipmentCreateBy { get; set; }
         public virtual ICollection<Equipment> EquipmentLastModifiedBy { get; set; }

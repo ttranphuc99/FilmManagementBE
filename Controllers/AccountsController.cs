@@ -6,32 +6,39 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FilmManagement_BE.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using FilmManagement_BE.Constants;
+using FilmManagement_BE.Services;
+using FilmManagement_BE.ViewModels;
+using System.Security.Claims;
 
 namespace FilmManagement_BE.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     public class AccountsController : ControllerBase
     {
         private readonly FilmManagerContext _context;
+        private readonly AccountService _service;
 
         public AccountsController(FilmManagerContext context)
         {
             _context = context;
+            _service = new AccountService(context);
         }
 
-        // GET: api/Accounts
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Account>>> GetAccount()
+        [Authorize(Roles = RoleConstants.DIRECTOR_STR, AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet("/api/actors")]
+        public ActionResult<IEnumerable<Account>> GetAccount()
         {
-            return await _context.Account.ToListAsync();
+            return Ok(_service.GetList());
         }
 
-        // GET: api/Accounts/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Account>> GetAccount(int id)
+        [Authorize(Roles = RoleConstants.DIRECTOR_STR, AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet("/api/actors/{id}")]
+        public ActionResult<AccountVModel> GetAccount(int id)
         {
-            var account = await _context.Account.FindAsync(id);
+            var account = _service.GetById(id);
 
             if (account == null)
             {
@@ -41,65 +48,48 @@ namespace FilmManagement_BE.Controllers
             return account;
         }
 
-        // PUT: api/Accounts/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(int id, Account account)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPut("/api/accounts")]
+        public ActionResult ChangeProfile(AccountVModel account)
         {
-            if (id != account.Id)
-            {
-                return BadRequest();
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            account.Id = userId;
+            var result = _service.UpdateAccount(account);
+
+            if (result != null) {
+                return Ok(result);
             }
 
-            _context.Entry(account).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AccountExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return BadRequest("Cannot change profile");
         }
 
-        // POST: api/Accounts
-        [HttpPost]
-        public async Task<ActionResult<Account>> PostAccount(Account account)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        [HttpPost("/api/actors")]
+        public ActionResult Register(AccountVModel account)
         {
-            _context.Account.Add(account);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetAccount", new { id = account.Id }, account);
-        }
-
-        // DELETE: api/Accounts/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Account>> DeleteAccount(int id)
-        {
-            var account = await _context.Account.FindAsync(id);
-            if (account == null)
+            account.Role = 2;
+            if (_service.IsExistedUsername(account.Username))
             {
-                return NotFound();
+                return BadRequest(new { message = "Username is existed" });
             }
 
-            _context.Account.Remove(account);
-            await _context.SaveChangesAsync();
+            var result = _service.Register(account);
 
-            return account;
+            return Created("", result);
         }
 
-        private bool AccountExists(int id)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        [HttpDelete("/api/actors/{id}")]
+        public ActionResult<Account> DeleteAccount(int id)
         {
-            return _context.Account.Any(e => e.Id == id);
+            if (_service.DeleteAccount(id))
+            {
+                return Ok();
+            }
+            return BadRequest("Cannot delete account");
         }
     }
 }
