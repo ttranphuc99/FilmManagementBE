@@ -76,7 +76,7 @@ namespace FilmManagement_BE.Services
 
         public AccountVModel UpdateAccount(AccountVModel account)
         {
-            var currentAccount = _context.Account.Where(record => record.Id == account.Id && record.Status == true).FirstOrDefault();
+            var currentAccount = _context.Account.Where(record => record.Id == account.Id).FirstOrDefault();
 
             if (currentAccount == null)
             {
@@ -88,6 +88,7 @@ namespace FilmManagement_BE.Services
             currentAccount.Phone = account.Phone;
             currentAccount.Email = account.Email;
             currentAccount.Description = account.Description;
+            currentAccount.Status = account.Status;
 
             _context.Entry(currentAccount).State = EntityState.Modified;
             _context.SaveChanges();
