@@ -24,9 +24,6 @@ namespace FilmManagement_BE.Models
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -146,6 +143,8 @@ namespace FilmManagement_BE.Models
 
                 entity.Property(e => e.AccountId).HasColumnName("AccountID");
 
+                entity.Property(e => e.Characters).HasMaxLength(1000);
+
                 entity.Property(e => e.CreateById).HasColumnName("CreateByID");
 
                 entity.Property(e => e.CreateTime).HasColumnType("datetime");
@@ -153,8 +152,6 @@ namespace FilmManagement_BE.Models
                 entity.Property(e => e.LastModified).HasColumnType("datetime");
 
                 entity.Property(e => e.LastModifiedById).HasColumnName("LastModifiedByID");
-
-                entity.Property(e => e.StartTime).HasColumnType("datetime");
 
                 entity.HasOne(d => d.Account)
                     .WithMany(p => p.ScenarioAccountDetailAccount)

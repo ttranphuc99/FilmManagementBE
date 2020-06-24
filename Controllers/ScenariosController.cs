@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FilmManagement_BE.Models;
+using FilmManagement_BE.ViewModels;
+using System.Security.Claims;
+using FilmManagement_BE.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using FilmManagement_BE.Constants;
 
 namespace FilmManagement_BE.Controllers
 {
@@ -14,75 +20,70 @@ namespace FilmManagement_BE.Controllers
     public class ScenariosController : ControllerBase
     {
         private readonly FilmManagerContext _context;
+        private readonly ScenarioService _service;
 
         public ScenariosController(FilmManagerContext context)
         {
             _context = context;
+            _service = new ScenarioService(context);
         }
 
-        // GET: api/Scenarios
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Scenario>>> GetScenario()
+        [HttpGet("/api/scenarios")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult<IEnumerable<Scenario>> GetScenario()
         {
-            return await _context.Scenario.ToListAsync();
+            return Ok(_service.GetListScenario());
         }
 
-        // GET: api/Scenarios/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Scenario>> GetScenario(long id)
+        [HttpGet("/api/scenarios/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult<Scenario> GetScenario(long id)
         {
-            var scenario = await _context.Scenario.FindAsync(id);
+            var scenario = _service.GetById(id);
 
-            if (scenario == null)
-            {
-                return NotFound();
-            }
+            if (scenario != null) return Ok(scenario);
 
-            return scenario;
+            return NotFound();
         }
 
         // PUT: api/Scenarios/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutScenario(long id, Scenario scenario)
+        [HttpPut("/api/scenarios/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public IActionResult PutScenario(long id, ScenarioVModel scenario)
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            scenario.LastModifiedBy = new AccountVModel() { Id = userId };
+
             if (id != scenario.Id)
             {
-                return BadRequest();
+                scenario.Id = id;
             }
 
-            _context.Entry(scenario).State = EntityState.Modified;
+            var result = _service.UpdateScenario(scenario);
+            
+            if (result != null) return Ok();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ScenarioExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return BadRequest("Cannot find object with ID: " + id);
         }
 
-        // POST: api/Scenarios
-        [HttpPost]
-        public async Task<ActionResult<Scenario>> PostScenario(Scenario scenario)
+        [HttpPost("/api/scenarios")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult PostScenario(ScenarioVModel scenario)
         {
-            _context.Scenario.Add(scenario);
-            await _context.SaveChangesAsync();
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
 
-            return CreatedAtAction("GetScenario", new { id = scenario.Id }, scenario);
+            scenario.CreatedBy = new AccountVModel() { Id = userId };
+
+            return Created("", _service.AddScenario(scenario));
         }
 
         // DELETE: api/Scenarios/5
-        [HttpDelete("{id}")]
+        [HttpDelete("/api/scenarios/{id}")]
         public async Task<ActionResult<Scenario>> DeleteScenario(long id)
         {
             var scenario = await _context.Scenario.FindAsync(id);
@@ -91,15 +92,70 @@ namespace FilmManagement_BE.Controllers
                 return NotFound();
             }
 
-            _context.Scenario.Remove(scenario);
-            await _context.SaveChangesAsync();
+            if (_service.DeleteScenario(scenario))
+            {
+                return Ok();
+            }
 
-            return scenario;
+            return BadRequest("Cannot delete scenario");
         }
 
-        private bool ScenarioExists(long id)
+        [HttpPost("/api/scenarios/{scenId}/actors/{actorId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult AddActorToScen(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)
         {
-            return _context.Scenario.Any(e => e.Id == id);
+            scenAcc.Account = new AccountVModel() { Id = actorId };
+            scenAcc.Scenario = new ScenarioVModel() { Id = scenId };
+
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            scenAcc.CreateBy = new AccountVModel() { Id = userId };
+
+            if (_service.AddActorToScenario(scenAcc))
+            {
+                return Created("", scenAcc);
+            }
+
+            return BadRequest("Actor is already in");
+        }
+
+        [HttpPut("/api/scenarios/{scenId}/actors/{actorId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult EditCharacter(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)
+        {
+            scenAcc.Account = new AccountVModel() { Id = actorId };
+            scenAcc.Scenario = new ScenarioVModel() { Id = scenId };
+
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            scenAcc.LastModifiedBy = new AccountVModel() { Id = userId };
+
+            if (_service.ChangeCharacterForActor(scenAcc))
+            {
+                return Ok(scenAcc);
+            }
+
+            return BadRequest("Not find actor and scenario");
+        }
+
+        [HttpDelete("/api/scenarios/{scenId}/actors/{actorId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult DeleteCharacter(long scenId, int actorId)
+        {
+            var scenAcc = new ScenarioAccountVModel();
+            scenAcc.Account = new AccountVModel() { Id = actorId };
+            scenAcc.Scenario = new ScenarioVModel() { Id = scenId };
+
+            if (_service.RemoveActorFromScenario(scenAcc))
+            {
+                return Ok(scenAcc);
+            }
+
+            return BadRequest("Cannot remove actor");
         }
     }
 }

@@ -11,8 +11,7 @@ namespace FilmManagement_BE.Models
         public int? CreateById { get; set; }
         public DateTime? LastModified { get; set; }
         public int? LastModifiedById { get; set; }
-        public DateTime? StartTime { get; set; }
-        public int? Status { get; set; }
+        public string Characters { get; set; }
 
         public virtual Account Account { get; set; }
         public virtual Account LastModifiedBy { get; set; }
