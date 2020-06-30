@@ -29,7 +29,8 @@ namespace FilmManagement_BE.Services
                 Script = scenario.Script,
                 Status = 0,
                 CreateTime = DateTime.Now,
-                CreateById = scenario.CreatedBy.Id
+                CreateById = scenario.CreatedBy.Id,
+                RecordQuantity = scenario.RecordQuantity
             };
             _context.Scenario.Add(model);
             _context.SaveChanges();
