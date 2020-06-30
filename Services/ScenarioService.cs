@@ -112,8 +112,8 @@ namespace FilmManagement_BE.Services
 
             var model = new ScenarioAccountDetail()
             {
-                AccountId = scenAcc.Account.Id,
-                ScenarioId = scenAcc.Scenario.Id,
+                AccountId = scenAcc.Account.Id ?? default,
+                ScenarioId = scenAcc.Scenario.Id ?? default,
                 CreateTime = DateTime.Now,
                 CreateById = scenAcc.CreateBy.Id,
                 Characters = scenAcc.Characters
