@@ -84,7 +84,7 @@ namespace FilmManagement_BE.Services
 
         public ICollection<ScenarioVModel> GetListScenario()
         {
-            var result = _context.Scenario.OrderBy(record => record.CreateTime).ToList();
+            var result = _context.Scenario.OrderByDescending(record => record.CreateTime).ToList();
             return this.ParseToVModel(result);
         }
 

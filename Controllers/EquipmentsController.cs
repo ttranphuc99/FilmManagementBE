@@ -6,100 +6,85 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FilmManagement_BE.Models;
+using FilmManagement_BE.Services;
+using FilmManagement_BE.ViewModels;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace FilmManagement_BE.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class EquipmentsController : ControllerBase
     {
         private readonly FilmManagerContext _context;
+        private readonly EquipmentService _service;
 
         public EquipmentsController(FilmManagerContext context)
         {
             _context = context;
+            _service = new EquipmentService(context);
         }
 
         // GET: api/Equipments
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Equipment>>> GetEquipment()
+        [HttpGet("/api/equipments")]
+        public ActionResult GetEquipment()
         {
-            return await _context.Equipment.ToListAsync();
+            return Ok(_service.GetListEquipments());
         }
 
-        // GET: api/Equipments/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Equipment>> GetEquipment(long id)
+        [HttpGet("/api/equipments/{id}")]
+        public ActionResult GetEquipment(long id)
         {
-            var equipment = await _context.Equipment.FindAsync(id);
+            var equipment = _service.GetById(id);
 
             if (equipment == null)
             {
                 return NotFound();
             }
 
-            return equipment;
+            return Ok(equipment);
         }
 
-        // PUT: api/Equipments/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEquipment(long id, Equipment equipment)
+        [HttpPut("/api/equipments/{id}")]
+        public ActionResult PutEquipment(long id, EquipmentVModel equipment)
         {
-            if (id != equipment.Id)
-            {
-                return BadRequest();
-            }
+            if (id != equipment.Id) equipment.Id = id;
 
-            _context.Entry(equipment).State = EntityState.Modified;
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out int userId);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EquipmentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            equipment.LastModifiedBy = new AccountVModel() { Id = userId };
 
-            return NoContent();
+            _service.UpdateEquipment(equipment);
+
+            return Ok(equipment);
         }
 
-        // POST: api/Equipments
-        [HttpPost]
-        public async Task<ActionResult<Equipment>> PostEquipment(Equipment equipment)
+        [HttpPost("/api/equipments")]
+        public ActionResult PostEquipment(EquipmentVModel equipment)
         {
-            _context.Equipment.Add(equipment);
-            await _context.SaveChangesAsync();
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out int userId);
 
-            return CreatedAtAction("GetEquipment", new { id = equipment.Id }, equipment);
+            equipment.CreateBy = new AccountVModel() { Id = userId };
+
+            _service.InsertEquipment(equipment);
+
+            return Created("", equipment);
         }
 
-        // DELETE: api/Equipments/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Equipment>> DeleteEquipment(long id)
+        [HttpDelete("/api/equipments/{id}")]
+        public ActionResult DeleteEquipment(long id)
         {
-            var equipment = await _context.Equipment.FindAsync(id);
-            if (equipment == null)
+            if (_service.Delete(id))
             {
-                return NotFound();
+                return Ok();
             }
 
-            _context.Equipment.Remove(equipment);
-            await _context.SaveChangesAsync();
-
-            return equipment;
-        }
-
-        private bool EquipmentExists(long id)
-        {
-            return _context.Equipment.Any(e => e.Id == id);
+            return BadRequest("Cannot delete");
         }
     }
 }

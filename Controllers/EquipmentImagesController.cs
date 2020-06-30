@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FilmManagement_BE.Models;
+using FilmManagement_BE.Services;
+using FilmManagement_BE.ViewModels;
 
 namespace FilmManagement_BE.Controllers
 {
@@ -14,92 +16,33 @@ namespace FilmManagement_BE.Controllers
     public class EquipmentImagesController : ControllerBase
     {
         private readonly FilmManagerContext _context;
+        private readonly EquipmentImageService _service;
 
         public EquipmentImagesController(FilmManagerContext context)
         {
             _context = context;
+            _service = new EquipmentImageService(context);
         }
 
-        // GET: api/EquipmentImages
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<EquipmentImage>>> GetEquipmentImage()
+        [HttpPost("/api/equipments/{equipmentId}/equipment-images")]
+        public ActionResult PostEquipmentImage(long equipmentId, List<EquipmentImageVModel> listImg)
         {
-            return await _context.EquipmentImage.ToListAsync();
-        }
-
-        // GET: api/EquipmentImages/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<EquipmentImage>> GetEquipmentImage(long id)
-        {
-            var equipmentImage = await _context.EquipmentImage.FindAsync(id);
-
-            if (equipmentImage == null)
+            if (_service.Insert(listImg, equipmentId))
             {
-                return NotFound();
+                return Created("", listImg);
             }
 
-            return equipmentImage;
+            return BadRequest("Cannot inset");
         }
 
-        // PUT: api/EquipmentImages/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEquipmentImage(long id, EquipmentImage equipmentImage)
+        [HttpDelete("/api/equipment-images")]
+        public ActionResult DeleteEquipmentImage(List<long> listId)
         {
-            if (id != equipmentImage.Id)
+            if (_service.Delete(listId))
             {
-                return BadRequest();
+                return Ok();
             }
-
-            _context.Entry(equipmentImage).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EquipmentImageExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/EquipmentImages
-        [HttpPost]
-        public async Task<ActionResult<EquipmentImage>> PostEquipmentImage(EquipmentImage equipmentImage)
-        {
-            _context.EquipmentImage.Add(equipmentImage);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetEquipmentImage", new { id = equipmentImage.Id }, equipmentImage);
-        }
-
-        // DELETE: api/EquipmentImages/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<EquipmentImage>> DeleteEquipmentImage(long id)
-        {
-            var equipmentImage = await _context.EquipmentImage.FindAsync(id);
-            if (equipmentImage == null)
-            {
-                return NotFound();
-            }
-
-            _context.EquipmentImage.Remove(equipmentImage);
-            await _context.SaveChangesAsync();
-
-            return equipmentImage;
-        }
-
-        private bool EquipmentImageExists(long id)
-        {
-            return _context.EquipmentImage.Any(e => e.Id == id);
+            return BadRequest("Cannot delete");
         }
     }
 }
