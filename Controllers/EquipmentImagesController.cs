@@ -35,7 +35,7 @@ namespace FilmManagement_BE.Controllers
             return BadRequest("Cannot inset");
         }
 
-        [HttpDelete("/api/equipment-images")]
+        [HttpPut("/api/equipment-images")]
         public ActionResult DeleteEquipmentImage(List<long> listId)
         {
             if (_service.Delete(listId))
