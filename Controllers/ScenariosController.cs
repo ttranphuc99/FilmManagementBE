@@ -157,5 +157,57 @@ namespace FilmManagement_BE.Controllers
 
             return BadRequest("Cannot remove actor");
         }
+
+        [HttpGet("/api/equipments-available/{equipId}/scenarios/{scenId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult GetAvaibleQuantityEquipmentForScenario(long? equipId, long? scenId)
+        {
+            return Ok(_service.GetEquipmentAvailableForScence(equipId, scenId));
+        }
+
+        [HttpPost("/api/scenarios/{scenId}/equipments/{equipId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult AddEquipmentToScen(long? scenId, long? equipId, ScenarioEquipmentVModel scenEqui)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            scenEqui.Equipment = new EquipmentVModel() { Id = equipId };
+            scenEqui.Scenario = new ScenarioVModel() { Id = scenId };
+            scenEqui.CreatedBy = new AccountVModel() { Id = userId };
+
+            return Ok(_service.AddEquipmentToScen(scenEqui));
+        }
+
+        [HttpPut("/api/scenarios/{scenId}/equipments/{equipId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult UpdateEquipmentToScen(long? scenId, long? equipId, ScenarioEquipmentVModel scenEqui)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            scenEqui.Equipment = new EquipmentVModel() { Id = equipId };
+            scenEqui.Scenario = new ScenarioVModel() { Id = scenId };
+            scenEqui.LastModifiedBy = new AccountVModel() { Id = userId };
+
+            var result = _service.UpdateEquipmentInScence(scenEqui);
+
+            if (result == null) return NotFound();
+
+            return Ok(result);
+        }
+
+        [HttpDelete("/api/scenarios/{scenId}/equipments/{equipId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        public ActionResult DeleteEquipmentToScen(long? scenId, long? equipId)
+        {
+            var result = _service.DeleteEquipmentInScence(equipId, scenId);
+
+            if (!result) return NotFound();
+
+            return Ok();
+        }
     }
 }

@@ -161,6 +161,105 @@ namespace FilmManagement_BE.Services
             return true;
         }
 
+        public long? GetEquipmentAvailableForScence(long? equipId, long? scenId)
+        {
+            var equipment = _context.Equipment.Find(equipId);
+            var scence = _context.Scenario.Find(scenId);
+
+            if (equipment == null || scence == null) return null;
+
+            var listScenInTime = _context.Scenario
+                .Where(record =>
+                    record.Id != scenId &&
+                    (
+                        (record.TimeStart >= scence.TimeStart &&
+                        record.TimeEnd <= scence.TimeEnd)
+                        ||
+                        (record.TimeStart >= scence.TimeStart &&
+                        record.TimeStart <= scence.TimeEnd
+                        )
+                        ||
+                        (record.TimeEnd >= scence.TimeStart &&
+                        record.TimeEnd <= scence.TimeEnd)
+                    ) &&
+                    _context.ScenarioEquipmentDetail
+                        .Where(detail =>
+                            detail.ScenarioId == record.Id &&
+                            detail.EquipmentId == equipment.Id
+                        ).Count() > 0
+                    )
+                .ToList();
+
+            if (listScenInTime.Count == 0) return equipment.Quantity;
+            var quantity = 0;
+            foreach (var scen in listScenInTime)
+            {
+                var eachQuantity = _context.ScenarioEquipmentDetail
+                    .Where(record =>
+                        record.ScenarioId == scence.Id &&
+                        record.EquipmentId == equipment.Id
+                    ).FirstOrDefault()
+                    .Quantity ?? default;
+                quantity += eachQuantity;
+            }
+
+            return equipment.Quantity - quantity;
+        }
+
+        public ScenarioEquipmentVModel AddEquipmentToScen(ScenarioEquipmentVModel scenEqui)
+        {
+            var model = new ScenarioEquipmentDetail()
+            {
+                ScenarioId = scenEqui.Scenario.Id ?? default,
+                EquipmentId = scenEqui.Equipment.Id ?? default,
+                Description = scenEqui.Description,
+                Quantity = scenEqui.Quantity,
+                CreatedById = scenEqui.CreatedBy.Id,
+                CreatedTime = DateTime.Now
+            };
+            _context.ScenarioEquipmentDetail.Add(model);
+            _context.SaveChanges();
+
+            scenEqui.CreatedTime = model.CreatedTime;
+
+            return scenEqui;
+        }
+
+        public ScenarioEquipmentVModel UpdateEquipmentInScence(ScenarioEquipmentVModel scenEqui)
+        {
+            var current = _context.ScenarioEquipmentDetail
+                .Where(record => record.ScenarioId == scenEqui.Scenario.Id && record.EquipmentId == scenEqui.Equipment.Id)
+                .FirstOrDefault();
+
+            if (current == null) return null;
+
+            current.Description = scenEqui.Description;
+            current.Quantity = scenEqui.Quantity;
+            current.LastModifiedById = scenEqui.LastModifiedBy.Id;
+            current.LastModified = DateTime.Now;
+
+            _context.Entry(current).State = EntityState.Modified;
+            _context.SaveChanges();
+
+            scenEqui.LastModified = current.LastModified;
+
+            return scenEqui;
+        }
+
+        public bool DeleteEquipmentInScence(long? equipId, long? scenId)
+        {
+            var current = _context.ScenarioEquipmentDetail
+                .Where(record => record.ScenarioId == equipId && record.EquipmentId == scenId)
+                .FirstOrDefault();
+
+            if (current == null) return false;
+
+            _context.ScenarioEquipmentDetail.Remove(current);
+            _context.SaveChanges();
+
+            return true;
+        }
+
         private ICollection<ScenarioVModel> ParseToVModel(ICollection<Scenario> list)
         {
             var result = new List<ScenarioVModel>();
