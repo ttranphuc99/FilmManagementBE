@@ -100,6 +100,20 @@ namespace FilmManagement_BE.Controllers
             return BadRequest("Cannot delete scenario");
         }
 
+        [HttpGet("/api/scenarios/{scenId}/actors")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult GetListActors(long scenId)
+        {
+            return Ok(_service.GetListActors(scenId));
+        }
+
+        [HttpGet("/api/scenarios/{scenId}/equipments")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult GetListEquipments(long scenId)
+        {
+            return Ok(_service.GetListEquipment(scenId));
+        }
+
         [HttpPost("/api/scenarios/{scenId}/actors/{actorId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
         public ActionResult AddActorToScen(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)

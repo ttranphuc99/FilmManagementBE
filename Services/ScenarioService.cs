@@ -260,6 +260,99 @@ namespace FilmManagement_BE.Services
             return true;
         }
 
+        public IEnumerable<ScenarioAccountVModel> GetListActors(long? scenId)
+        {
+            var list = _context.ScenarioAccountDetail
+                .Include(record => record.Account)
+                .Include(record => record.CreateBy)
+                .Include(record => record.LastModifiedBy)
+                .Where(record => record.ScenarioId == scenId)
+                .ToList();
+
+            var result = new List<ScenarioAccountVModel>();
+
+            foreach (var model in list) {
+                var vmodel = new ScenarioAccountVModel()
+                {
+                    Account = model.Account != null ? new AccountVModel()
+                    {
+                        Id = model.Account.Id,
+                        Username = model.Account.Username,
+                        Fullname = model.Account.Fullname,
+                        Phone = model.Account.Phone,
+                        Email = model.Account.Email,
+                        Image = model.Account.Image,
+                        Status = model.Account.Status ?? default
+                    } : null,
+                    Characters = model.Characters,
+                    CreateBy = model.CreateBy != null ? new AccountVModel()
+                    {
+                        Id = model.CreateBy.Id,
+                        Username = model.CreateBy.Username,
+                        Fullname = model.CreateBy.Fullname,
+                    } : null,
+                    CreateTime = model.CreateTime,
+                    LastModifiedBy = model.LastModifiedBy != null ? new AccountVModel()
+                    {
+                        Id = model.LastModifiedBy.Id,
+                        Username = model.LastModifiedBy.Username,
+                        Fullname = model.LastModifiedBy.Fullname,
+                    } : null,
+                    LastModified = model.LastModified
+                };
+
+                result.Add(vmodel);
+            }
+
+            return result;
+        }
+
+        public IEnumerable<ScenarioEquipmentVModel> GetListEquipment(long? scenId)
+        {
+            var list = _context.ScenarioEquipmentDetail
+                .Include(record => record.Equipment)
+                .Include(record => record.CreatedBy)
+                .Include(record => record.LastModifiedBy)
+                .Where(record => record.ScenarioId == scenId)
+                .ToList();
+
+            var result = new List<ScenarioEquipmentVModel>();
+
+            foreach (var model in list)
+            {
+                var vmodel = new ScenarioEquipmentVModel()
+                {
+                    Equipment = model.Equipment != null ? new EquipmentVModel()
+                    {
+                        Id = model.Equipment.Id,
+                        Name = model.Equipment.Name,
+                        Quantity = model.Equipment.Quantity,
+                        Status = model.Equipment.Status
+                    } : null,
+                    Quantity = model.Quantity,
+                    Description = model.Description,
+                    CreatedBy = model.CreatedBy != null ? new AccountVModel()
+                    {
+                        Id = model.CreatedBy.Id,
+                        Username = model.CreatedBy.Username,
+                        Fullname = model.CreatedBy.Fullname,
+                    } : null,
+                    CreatedTime = model.CreatedTime,
+                    LastModifiedBy = model.LastModifiedBy != null ? new AccountVModel()
+                    {
+                        Id = model.LastModifiedBy.Id,
+                        Username = model.LastModifiedBy.Username,
+                        Fullname = model.LastModifiedBy.Fullname,
+                    } : null,
+                    LastModified = model.LastModified
+                };
+
+                result.Add(vmodel);
+            }
+
+            return result;
+        }
+
         private ICollection<ScenarioVModel> ParseToVModel(ICollection<Scenario> list)
         {
             var result = new List<ScenarioVModel>();

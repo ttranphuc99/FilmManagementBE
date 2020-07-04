@@ -42,9 +42,7 @@ namespace FilmManagement_BE.Models
 
                 entity.Property(e => e.Fullname).HasMaxLength(50);
 
-                entity.Property(e => e.Image)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.Image).IsUnicode(false);
 
                 entity.Property(e => e.Password)
                     .HasMaxLength(256)
@@ -90,9 +88,7 @@ namespace FilmManagement_BE.Models
 
                 entity.Property(e => e.EquipmentId).HasColumnName("EquipmentID");
 
-                entity.Property(e => e.Url)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.Url).IsUnicode(false);
 
                 entity.HasOne(d => d.Equipment)
                     .WithMany(p => p.EquipmentImage)
@@ -116,9 +112,7 @@ namespace FilmManagement_BE.Models
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
-                entity.Property(e => e.Script)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.Script).IsUnicode(false);
 
                 entity.Property(e => e.TimeEnd).HasColumnType("datetime");
 
@@ -158,6 +152,11 @@ namespace FilmManagement_BE.Models
                     .HasForeignKey(d => d.AccountId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ScenarioAccountDetail_Account");
+
+                entity.HasOne(d => d.CreateBy)
+                    .WithMany(p => p.ScenarioAccountDetailCreateBy)
+                    .HasForeignKey(d => d.CreateById)
+                    .HasConstraintName("FK_ScenarioAccountDetail_Account_3");
 
                 entity.HasOne(d => d.LastModifiedBy)
                     .WithMany(p => p.ScenarioAccountDetailLastModifiedBy)

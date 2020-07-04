@@ -14,6 +14,7 @@ namespace FilmManagement_BE.Models
         public string Characters { get; set; }
 
         public virtual Account Account { get; set; }
+        public virtual Account CreateBy { get; set; }
         public virtual Account LastModifiedBy { get; set; }
         public virtual Scenario Scenario { get; set; }
     }

@@ -10,6 +10,7 @@ namespace FilmManagement_BE.Models
             EquipmentCreateBy = new HashSet<Equipment>();
             EquipmentLastModifiedBy = new HashSet<Equipment>();
             ScenarioAccountDetailAccount = new HashSet<ScenarioAccountDetail>();
+            ScenarioAccountDetailCreateBy = new HashSet<ScenarioAccountDetail>();
             ScenarioAccountDetailLastModifiedBy = new HashSet<ScenarioAccountDetail>();
             ScenarioCreateBy = new HashSet<Scenario>();
             ScenarioEquipmentDetailCreatedBy = new HashSet<ScenarioEquipmentDetail>();
@@ -32,6 +33,7 @@ namespace FilmManagement_BE.Models
         public virtual ICollection<Equipment> EquipmentCreateBy { get; set; }
         public virtual ICollection<Equipment> EquipmentLastModifiedBy { get; set; }
         public virtual ICollection<ScenarioAccountDetail> ScenarioAccountDetailAccount { get; set; }
+        public virtual ICollection<ScenarioAccountDetail> ScenarioAccountDetailCreateBy { get; set; }
         public virtual ICollection<ScenarioAccountDetail> ScenarioAccountDetailLastModifiedBy { get; set; }
         public virtual ICollection<Scenario> ScenarioCreateBy { get; set; }
         public virtual ICollection<ScenarioEquipmentDetail> ScenarioEquipmentDetailCreatedBy { get; set; }
