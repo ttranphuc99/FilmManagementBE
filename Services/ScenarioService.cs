@@ -249,7 +249,7 @@ namespace FilmManagement_BE.Services
         public bool DeleteEquipmentInScence(long? equipId, long? scenId)
         {
             var current = _context.ScenarioEquipmentDetail
-                .Where(record => record.ScenarioId == equipId && record.EquipmentId == scenId)
+                .Where(record => record.ScenarioId == scenId && record.EquipmentId == equipId)
                 .FirstOrDefault();
 
             if (current == null) return false;
