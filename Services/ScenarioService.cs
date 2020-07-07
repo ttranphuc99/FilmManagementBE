@@ -17,6 +17,51 @@ namespace FilmManagement_BE.Services
             _context = context;
         }
 
+        public IEnumerable<ScenarioAccountVModel> GetListScenOfActor(int actorId)
+        {
+            var list = _context.ScenarioAccountDetail
+                .Include(record => record.Scenario)
+                .Include(record => record.CreateBy)
+                .Include(record => record.LastModifiedBy)
+                .Where(record => record.AccountId == actorId)
+                .OrderByDescending(record => record.Scenario.TimeStart)
+                .ToList();
+
+            var result = new List<ScenarioAccountVModel>();
+
+            foreach (var model in list)
+            {
+                var vmodel = new ScenarioAccountVModel()
+                {
+                    Account = new AccountVModel()
+                    {
+                        Id = actorId
+                    },
+                    Scenario = model.Scenario != null ?
+                        this.ParseToVModel(new List<Scenario>() { model.Scenario }).FirstOrDefault()
+                        : null,
+                    Characters = model.Characters,
+                    CreateBy = model.CreateBy != null ? new AccountVModel()
+                    {
+                        Id = model.CreateBy.Id,
+                        Fullname = model.CreateBy.Fullname,
+                        Username = model.CreateBy.Username
+                    } : null,
+                    CreateTime = model.CreateTime,
+                    LastModified = model.LastModified,
+                    LastModifiedBy = model.LastModifiedBy != null ? new AccountVModel()
+                    {
+                        Id = model.LastModifiedBy.Id,
+                        Fullname = model.LastModifiedBy.Fullname,
+                        Username = model.LastModifiedBy.Username
+                    } : null
+                };
+                result.Add(vmodel);
+            }
+
+            return result;
+        }
+
         public ScenarioVModel AddScenario(ScenarioVModel scenario)
         {
             Scenario model = new Scenario()

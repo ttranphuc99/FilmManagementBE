@@ -18,6 +18,25 @@ namespace FilmManagement_BE.Services
             _context = context;
         }
 
+        public AccountVModel GetProfile(int id)
+        {
+            var result = _context.Account.Where(record => record.Id == id).FirstOrDefault();
+
+            if (result == null) return null;
+
+            return new AccountVModel()
+            {
+                Id = result.Id,
+                Fullname = result.Fullname,
+                Description = result.Description,
+                Email = result.Email,
+                Image = result.Image,
+                Phone = result.Phone,
+                Status = result.Status ?? default,
+                Username = result.Username
+            };
+        }
+
         public AccountVModel Register(AccountVModel account)
         {
             AccountVModel result = null;

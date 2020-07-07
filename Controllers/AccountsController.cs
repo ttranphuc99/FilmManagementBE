@@ -59,7 +59,7 @@ namespace FilmManagement_BE.Controllers
             int roleId;
             int.TryParse(identity.FindFirst(ClaimTypes.Role).Value, out roleId);
 
-            if (roleId == 2) account.Id = userId;
+            account.Id = userId;
             
             var result = _service.UpdateAccount(account);
 

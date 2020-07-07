@@ -35,6 +35,17 @@ namespace FilmManagement_BE.Controllers
             return Ok(_service.GetListScenario());
         }
 
+        [HttpGet("/api/actors/scenarios")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.ACTOR_STR)]
+        public ActionResult GetScenarioOfActor()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            return Ok(_service.GetListScenOfActor(userId));
+        }
+
         [HttpGet("/api/scenarios/{id}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public ActionResult<Scenario> GetScenario(long id)

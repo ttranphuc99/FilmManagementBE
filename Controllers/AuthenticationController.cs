@@ -63,6 +63,21 @@ namespace FilmManagement_BE.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Processing Failed" });
         }
 
+        [HttpGet("api/profile")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult GetProfile()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            int userId;
+            int.TryParse(identity.FindFirst(ClaimTypes.NameIdentifier).Value, out userId);
+
+            var profile = _accountService.GetProfile(userId);
+
+            if (profile == null) return NotFound("Not found user ID " + userId);
+
+            return Ok(profile);
+        }
+
         [HttpPost("api/change-password")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public ActionResult ChangePassword(AccountVModel account)
@@ -81,13 +96,6 @@ namespace FilmManagement_BE.Controllers
             }
 
             return BadRequest("Cannot change password");
-        }
-
-        [Authorize(Roles = RoleConstants.DIRECTOR_STR, AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPost("api/add-director")]
-        public ActionResult<AccountVModel> AddAdmin(Account account)
-        {
-            return null;
         }
 
         private string GenerateJSONWebToken(AccountVModel account)
