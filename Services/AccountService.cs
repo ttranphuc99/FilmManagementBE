@@ -93,6 +93,17 @@ namespace FilmManagement_BE.Services
             return true;
         }
 
+        public bool ActiveAccount(int id)
+        {
+            Account account = _context.Account.Where(record => record.Id == id).FirstOrDefault();
+            account.Status = true;
+
+            _context.Entry(account).State = EntityState.Modified;
+            _context.SaveChanges();
+
+            return true;
+        }
+
         public AccountVModel UpdateAccount(AccountVModel account)
         {
             var currentAccount = _context.Account.Where(record => record.Id == account.Id).FirstOrDefault();

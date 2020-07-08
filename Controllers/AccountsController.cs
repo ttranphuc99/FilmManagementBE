@@ -95,5 +95,16 @@ namespace FilmManagement_BE.Controllers
             }
             return BadRequest("Cannot delete account");
         }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        [HttpGet("/api/actors/{id}/active")]
+        public ActionResult<Account> ActiveAccount(int id)
+        {
+            if (_service.ActiveAccount(id))
+            {
+                return Ok();
+            }
+            return BadRequest("Cannot active account");
+        }
     }
 }
