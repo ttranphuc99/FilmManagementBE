@@ -202,7 +202,11 @@ namespace FilmManagement_BE.Controllers
             scenEqui.Scenario = new ScenarioVModel() { Id = scenId };
             scenEqui.CreatedBy = new AccountVModel() { Id = userId };
 
-            return Ok(_service.AddEquipmentToScen(scenEqui));
+            var result = _service.AddEquipmentToScen(scenEqui);
+
+            if (result == null) return BadRequest("Quantity is not enough for insert");
+
+            return Ok(result);
         }
 
         [HttpPut("/api/scenarios/{scenId}/equipments/{equipId}")]
@@ -219,7 +223,14 @@ namespace FilmManagement_BE.Controllers
 
             var result = _service.UpdateEquipmentInScence(scenEqui);
 
-            if (result == null) return NotFound();
+            if (result == null)
+            {
+                return NotFound();
+            }
+            else if (result.Equipment == null && result.Status == -99)
+            {
+                return BadRequest("Quantity is not enough for update");
+            }
 
             return Ok(result);
         }

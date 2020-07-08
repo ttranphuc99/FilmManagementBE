@@ -253,6 +253,10 @@ namespace FilmManagement_BE.Services
 
         public ScenarioEquipmentVModel AddEquipmentToScen(ScenarioEquipmentVModel scenEqui)
         {
+            var currentAvailable = this.GetEquipmentAvailableForScence(scenEqui.Equipment.Id, scenEqui.Scenario.Id);
+
+            if (currentAvailable < scenEqui.Quantity) return null;
+
             var model = new ScenarioEquipmentDetail()
             {
                 ScenarioId = scenEqui.Scenario.Id ?? default,
@@ -277,6 +281,10 @@ namespace FilmManagement_BE.Services
                 .FirstOrDefault();
 
             if (current == null) return null;
+
+            var currentAvai = this.GetEquipmentAvailableForScence(scenEqui.Equipment.Id, scenEqui.Scenario.Id);
+
+            if (currentAvai < scenEqui.Quantity) return new ScenarioEquipmentVModel() {Status = -99 } ;
 
             current.Description = scenEqui.Description;
             current.Quantity = scenEqui.Quantity;
