@@ -217,8 +217,8 @@ namespace FilmManagement_BE.Services
                 .Where(record =>
                     record.Id != scenId &&
                     (
-                        (record.TimeStart >= scence.TimeStart &&
-                        record.TimeEnd <= scence.TimeEnd)
+                        (record.TimeStart <= scence.TimeStart &&
+                        record.TimeEnd >= scence.TimeEnd)
                         ||
                         (record.TimeStart >= scence.TimeStart &&
                         record.TimeStart <= scence.TimeEnd
@@ -259,8 +259,8 @@ namespace FilmManagement_BE.Services
             var listScenInTime = _context.Scenario
                 .Where(record =>
                     (
-                        (record.TimeStart >= timeStart &&
-                        record.TimeEnd <= timeEnd)
+                        (record.TimeStart <= timeStart &&
+                        record.TimeEnd >= timeEnd)
                         ||
                         (record.TimeStart >= timeStart &&
                         record.TimeStart <= timeEnd
