@@ -216,6 +216,8 @@ namespace FilmManagement_BE.Services
             var listScenInTime = _context.Scenario
                 .Where(record =>
                     record.Id != scenId &&
+                    record.Status != -1 &&
+                    record.Status != 2 &&
                     (
                         (record.TimeStart <= scence.TimeStart &&
                         record.TimeEnd >= scence.TimeEnd)
@@ -258,6 +260,8 @@ namespace FilmManagement_BE.Services
 
             var listScenInTime = _context.Scenario
                 .Where(record =>
+                    record.Status != -1 &&
+                    record.Status != 2 &&
                     (
                         (record.TimeStart <= timeStart &&
                         record.TimeEnd >= timeEnd)
@@ -469,6 +473,7 @@ namespace FilmManagement_BE.Services
         public IEnumerable<ScenarioEquipmentVModel> GetListEquipment(long? scenId)
         {
             var list = _context.ScenarioEquipmentDetail
+                .Include(record => record.Scenario)
                 .Include(record => record.Equipment)
                 .Include(record => record.CreatedBy)
                 .Include(record => record.LastModifiedBy)
@@ -481,6 +486,18 @@ namespace FilmManagement_BE.Services
             {
                 var vmodel = new ScenarioEquipmentVModel()
                 {
+                    Scenario = model.Scenario != null ? new ScenarioVModel()
+                    {
+                        Id = model.Scenario.Id,
+                        Name = model.Scenario.Name,
+                        Location = model.Scenario.Location,
+                        Description = model.Scenario.Description,
+                        Script = model.Scenario.Script,
+                        RecordQuantity = model.Scenario.RecordQuantity ?? default,
+                        Status = model.Scenario.Status ?? default,
+                        TimeStart = model.Scenario.TimeStart ?? default,
+                        TimeEnd = model.Scenario.TimeEnd ?? default,
+                    } : null,
                     Equipment = model.Equipment != null ? new EquipmentVModel()
                     {
                         Id = model.Equipment.Id,
