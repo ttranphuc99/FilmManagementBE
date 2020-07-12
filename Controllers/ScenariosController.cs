@@ -29,7 +29,7 @@ namespace FilmManagement_BE.Controllers
         }
 
         [HttpGet("/api/scenarios")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public ActionResult<IEnumerable<Scenario>> GetScenario()
         {
             return Ok(_service.GetListScenario());
@@ -95,6 +95,7 @@ namespace FilmManagement_BE.Controllers
 
         // DELETE: api/Scenarios/5
         [HttpDelete("/api/scenarios/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
         public async Task<ActionResult<Scenario>> DeleteScenario(long id)
         {
             var scenario = await _context.Scenario.FindAsync(id);
@@ -184,7 +185,7 @@ namespace FilmManagement_BE.Controllers
         }
 
         [HttpGet("/api/equipments-available/{equipId}/scenarios/{scenId}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public ActionResult GetAvaibleQuantityEquipmentForScenario(long? equipId, long? scenId)
         {
             return Ok(_service.GetEquipmentAvailableForScence(equipId, scenId));
