@@ -241,7 +241,7 @@ namespace FilmManagement_BE.Services
             {
                 var eachQuantity = _context.ScenarioEquipmentDetail
                     .Where(record =>
-                        record.ScenarioId == scence.Id &&
+                        record.ScenarioId == scen.Id &&
                         record.EquipmentId == equipment.Id
                     ).FirstOrDefault()
                     .Quantity ?? default;
@@ -249,6 +249,112 @@ namespace FilmManagement_BE.Services
             }
 
             return equipment.Quantity - quantity;
+        }
+
+        public int? GetEquipmentAvailableForScence(DateTime timeStart, DateTime timeEnd, long? equipId)
+        {
+            var equipment = _context.Equipment.Find(equipId);
+            if (equipment == null) return null;
+
+            var listScenInTime = _context.Scenario
+                .Where(record =>
+                    (
+                        (record.TimeStart >= timeStart &&
+                        record.TimeEnd <= timeEnd)
+                        ||
+                        (record.TimeStart >= timeStart &&
+                        record.TimeStart <= timeEnd
+                        )
+                        ||
+                        (record.TimeEnd >= timeStart &&
+                        record.TimeEnd <= timeEnd)
+                    ) &&
+                    _context.ScenarioEquipmentDetail
+                        .Where(detail =>
+                            detail.ScenarioId == record.Id &&
+                            detail.EquipmentId == equipId
+                        ).Count() > 0
+                    )
+                .ToList();
+
+            if (listScenInTime.Count == 0) return equipment.Quantity;
+
+            var quantity = 0;
+            foreach (var scen in listScenInTime)
+            {
+                var eachQuantity = _context.ScenarioEquipmentDetail
+                    .Where(record =>
+                        record.ScenarioId == scen.Id &&
+                        record.EquipmentId == equipment.Id
+                    ).FirstOrDefault()
+                    .Quantity ?? default;
+                quantity += eachQuantity;
+            }
+
+            return equipment.Quantity - quantity;
+        }
+
+        public IEnumerable<EquipmentVModel> GetListEquimentAndAvai(DateTime timeStart, DateTime timeEnd)
+        {
+            var listModel = _context.Equipment
+                .Include(record => record.CreateBy)
+                .Include(record => record.LastModifiedBy)
+                .Include(record => record.EquipmentImage)
+                .OrderByDescending(record => record.CreateTime)
+                .ToList();
+
+            List<EquipmentVModel> result = new List<EquipmentVModel>();
+            foreach (var model in listModel)
+            {
+                var vmodel = new EquipmentVModel()
+                {
+                    Id = model.Id,
+                    Name = model.Name,
+                    Description = model.Description,
+                    Quantity = this.GetEquipmentAvailableForScence(timeStart, timeEnd, model.Id),
+                    Status = model.Status,
+                    CreateBy = model.CreateBy != null ? new AccountVModel()
+                    {
+                        Id = model.CreateBy.Id,
+                        Username = model.CreateBy.Username,
+                        Fullname = model.CreateBy.Fullname,
+                        Email = model.CreateBy.Email,
+                        Phone = model.CreateBy.Phone
+                    } : null,
+                    CreateTime = model.CreateTime,
+                    LastModifiedBy = model.LastModifiedBy != null ? new AccountVModel()
+                    {
+                        Id = model.LastModifiedBy.Id,
+                        Username = model.LastModifiedBy.Username,
+                        Fullname = model.LastModifiedBy.Fullname,
+                        Email = model.LastModifiedBy.Email,
+                        Phone = model.LastModifiedBy.Phone
+                    } : null,
+                    LastModified = model.LastModified
+                };
+
+                if (model.EquipmentImage != null && model.EquipmentImage.Count > 0)
+                {
+                    var listImg = new List<EquipmentImageVModel>();
+
+                    foreach (var img in model.EquipmentImage)
+                    {
+                        var imgVmodel = new EquipmentImageVModel()
+                        {
+                            Id = img.Id,
+                            Url = img.Url
+                        };
+
+                        listImg.Add(imgVmodel);
+                    }
+
+                    vmodel.ListImages = listImg;
+                }
+
+                result.Add(vmodel);
+            }
+
+            return result;
         }
 
         public ScenarioEquipmentVModel AddEquipmentToScen(ScenarioEquipmentVModel scenEqui)

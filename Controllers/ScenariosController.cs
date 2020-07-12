@@ -191,6 +191,13 @@ namespace FilmManagement_BE.Controllers
             return Ok(_service.GetEquipmentAvailableForScence(equipId, scenId));
         }
 
+        [HttpGet("/api/equipments-available")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public ActionResult GetListAnalystEquiments(DateTime timeStart, DateTime timeEnd)
+        {
+            return Ok(_service.GetListEquimentAndAvai(timeStart, timeEnd));
+        }
+
         [HttpPost("/api/scenarios/{scenId}/equipments/{equipId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
         public ActionResult AddEquipmentToScen(long? scenId, long? equipId, ScenarioEquipmentVModel scenEqui)
