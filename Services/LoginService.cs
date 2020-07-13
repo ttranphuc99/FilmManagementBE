@@ -37,7 +37,9 @@ namespace FilmManagement_BE.Services
                     dbAccount.DeviceToken = account.DeviceToken;
                     _context.Entry(dbAccount).State = EntityState.Modified;
 
-                    var past = _context.Account.Where(record => record.DeviceToken == account.DeviceToken).ToList();
+                    var past = _context.Account
+                        .Where(record => record.DeviceToken == account.DeviceToken && record.Username != account.Username)
+                        .ToList();
 
                     foreach (var item in past)
                     {
