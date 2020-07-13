@@ -56,7 +56,7 @@ namespace FilmManagement_BE.Services
             current.Description = equipment.Description;
             current.Quantity = equipment.Quantity;
             current.LastModifiedById = equipment.LastModifiedBy.Id;
-            current.LastModified = DateTime.Now;
+            current.LastModified = DateTime.UtcNow.AddHours(7);
 
             _context.Entry(current).State = EntityState.Modified;
             _context.SaveChanges();
@@ -73,7 +73,7 @@ namespace FilmManagement_BE.Services
                 Quantity = equipment.Quantity,
                 Status = true,
                 CreateById = equipment.CreateBy.Id,
-                CreateTime = DateTime.Now
+                CreateTime = DateTime.UtcNow.AddHours(7)
             };
 
             _context.Equipment.Add(model);

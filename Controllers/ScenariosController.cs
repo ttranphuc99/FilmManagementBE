@@ -169,8 +169,30 @@ namespace FilmManagement_BE.Controllers
 
             scenAcc.CreateBy = new AccountVModel() { Id = userId };
 
-            if (_service.AddActorToScenario(scenAcc))
+            scenAcc = _service.AddActorToScenario(scenAcc);
+            if (scenAcc != null)
             {
+                var accountSerivce = new AccountService(_context);
+
+                var listToken = accountSerivce.GetListUserToken(new List<int>() { actorId});
+
+                if (listToken.Count() > 0)
+                {
+                    var message = new MulticastMessage()
+                    {
+                        Tokens = listToken,
+                        Data = new Dictionary<string, string>()
+                        {
+                            { "message", "You has has been add to scenario" }
+                        },
+                        Notification = new Notification()
+                        {
+                            Title = scenAcc.Scenario.Name + " #" + scenAcc.Scenario.Id,
+                            Body = "You has has been add to scenario " + scenAcc.Scenario.Name +" at " + DateTime.UtcNow.AddHours(7)
+                        }
+                    };
+                    FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                }
                 return Created("", scenAcc);
             }
 
@@ -206,8 +228,30 @@ namespace FilmManagement_BE.Controllers
             scenAcc.Account = new AccountVModel() { Id = actorId };
             scenAcc.Scenario = new ScenarioVModel() { Id = scenId };
 
-            if (_service.RemoveActorFromScenario(scenAcc))
+            scenAcc = _service.RemoveActorFromScenario(scenAcc);
+            if (scenAcc != null)
             {
+                var accountSerivce = new AccountService(_context);
+
+                var listToken = accountSerivce.GetListUserToken(new List<int>() { actorId });
+
+                if (listToken.Count() > 0)
+                {
+                    var message = new MulticastMessage()
+                    {
+                        Tokens = listToken,
+                        Data = new Dictionary<string, string>()
+                        {
+                            { "message", "You has has been remove" }
+                        },
+                        Notification = new Notification()
+                        {
+                            Title = scenAcc.Scenario.Name + " #" + scenAcc.Scenario.Id,
+                            Body = "You has has been removed from scenario " + scenAcc.Scenario.Name + " at " + DateTime.UtcNow.AddHours(7)
+                        }
+                    };
+                    FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                }
                 return Ok(scenAcc);
             }
 

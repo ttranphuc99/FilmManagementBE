@@ -73,7 +73,7 @@ namespace FilmManagement_BE.Services
                 TimeEnd = scenario.TimeEnd,
                 Script = scenario.Script,
                 Status = 0,
-                CreateTime = DateTime.Now,
+                CreateTime = DateTime.UtcNow.AddHours(7),
                 CreateById = scenario.CreatedBy.Id,
                 RecordQuantity = scenario.RecordQuantity
             };
@@ -97,7 +97,7 @@ namespace FilmManagement_BE.Services
                 current.RecordQuantity = scenario.RecordQuantity;
                 current.Script = scenario.Script;
                 current.Status = scenario.Status;
-                current.LastModified = DateTime.Now;
+                current.LastModified = DateTime.UtcNow.AddHours(7);
                 current.LastModifiedById = scenario.LastModifiedBy.Id;
 
                 _context.Entry(current).State = EntityState.Modified;
@@ -144,7 +144,7 @@ namespace FilmManagement_BE.Services
             return this.ParseToVModel(new List<Scenario> { result }).FirstOrDefault();
         }
 
-        public bool AddActorToScenario(ScenarioAccountVModel scenAcc)
+        public ScenarioAccountVModel AddActorToScenario(ScenarioAccountVModel scenAcc)
         {
             var check = _context.ScenarioAccountDetail
                 .Where(
@@ -153,20 +153,50 @@ namespace FilmManagement_BE.Services
                         && record.ScenarioId == scenAcc.Scenario.Id
                 ).FirstOrDefault();
 
-            if (check != null) return false;
+            if (check != null) return null;
 
             var model = new ScenarioAccountDetail()
             {
                 AccountId = scenAcc.Account.Id ?? default,
                 ScenarioId = scenAcc.Scenario.Id ?? default,
-                CreateTime = DateTime.Now,
+                CreateTime = DateTime.UtcNow.AddHours(7),
                 CreateById = scenAcc.CreateBy.Id,
                 Characters = scenAcc.Characters
             };
             _context.ScenarioAccountDetail.Add(model);
             _context.SaveChanges();
 
-            return true;
+            var vmodel = new ScenarioAccountVModel()
+            {
+                Account = model.Account != null ? new AccountVModel()
+                {
+                    Id = model.Account.Id,
+                    Username = model.Account.Username,
+                    Fullname = model.Account.Fullname,
+                    Phone = model.Account.Phone,
+                    Email = model.Account.Email,
+                    Image = model.Account.Image,
+                    Status = model.Account.Status ?? default
+                } : null,
+                Characters = model.Characters,
+                CreateBy = model.CreateBy != null ? new AccountVModel()
+                {
+                    Id = model.CreateBy.Id,
+                    Username = model.CreateBy.Username,
+                    Fullname = model.CreateBy.Fullname,
+                } : null,
+                CreateTime = model.CreateTime,
+                LastModifiedBy = model.LastModifiedBy != null ? new AccountVModel()
+                {
+                    Id = model.LastModifiedBy.Id,
+                    Username = model.LastModifiedBy.Username,
+                    Fullname = model.LastModifiedBy.Fullname,
+                } : null,
+                LastModified = model.LastModified,
+                Scenario = this.ParseToVModel(new List<Scenario>() { model.Scenario }).FirstOrDefault()
+            };
+
+            return vmodel;
         }
 
         public bool ChangeCharacterForActor(ScenarioAccountVModel scenAcc)
@@ -181,7 +211,7 @@ namespace FilmManagement_BE.Services
             if (check == null) return false;
 
             check.Characters = scenAcc.Characters;
-            check.LastModified = DateTime.Now;
+            check.LastModified = DateTime.UtcNow.AddHours(7);
             check.LastModifiedById = scenAcc.LastModifiedBy.Id;
 
             _context.Entry(check).State = EntityState.Modified;
@@ -189,21 +219,51 @@ namespace FilmManagement_BE.Services
             return true;
         }
 
-        public bool RemoveActorFromScenario(ScenarioAccountVModel scenAcc)
+        public ScenarioAccountVModel RemoveActorFromScenario(ScenarioAccountVModel scenAcc)
         {
-            var check = _context.ScenarioAccountDetail
+            var model = _context.ScenarioAccountDetail
                 .Where(
                     record =>
                         record.AccountId == scenAcc.Account.Id
                         && record.ScenarioId == scenAcc.Scenario.Id
                 ).FirstOrDefault();
 
-            if (check == null) return false;
-
-            _context.ScenarioAccountDetail.Remove(check);
+            if (model == null) return null;
+            
+            _context.ScenarioAccountDetail.Remove(model);
             _context.SaveChanges();
 
-            return true;
+            var vmodel = new ScenarioAccountVModel()
+            {
+                Account = model.Account != null ? new AccountVModel()
+                {
+                    Id = model.Account.Id,
+                    Username = model.Account.Username,
+                    Fullname = model.Account.Fullname,
+                    Phone = model.Account.Phone,
+                    Email = model.Account.Email,
+                    Image = model.Account.Image,
+                    Status = model.Account.Status ?? default
+                } : null,
+                Characters = model.Characters,
+                CreateBy = model.CreateBy != null ? new AccountVModel()
+                {
+                    Id = model.CreateBy.Id,
+                    Username = model.CreateBy.Username,
+                    Fullname = model.CreateBy.Fullname,
+                } : null,
+                CreateTime = model.CreateTime,
+                LastModifiedBy = model.LastModifiedBy != null ? new AccountVModel()
+                {
+                    Id = model.LastModifiedBy.Id,
+                    Username = model.LastModifiedBy.Username,
+                    Fullname = model.LastModifiedBy.Fullname,
+                } : null,
+                LastModified = model.LastModified,
+                Scenario = this.ParseToVModel(new List<Scenario>() { model.Scenario }).FirstOrDefault()
+            };
+
+            return vmodel;
         }
 
         public long? GetEquipmentAvailableForScence(long? equipId, long? scenId)
@@ -374,7 +434,7 @@ namespace FilmManagement_BE.Services
                 Description = scenEqui.Description,
                 Quantity = scenEqui.Quantity,
                 CreatedById = scenEqui.CreatedBy.Id,
-                CreatedTime = DateTime.Now
+                CreatedTime = DateTime.UtcNow.AddHours(7)
             };
             _context.ScenarioEquipmentDetail.Add(model);
             _context.SaveChanges();
@@ -399,7 +459,7 @@ namespace FilmManagement_BE.Services
             current.Description = scenEqui.Description;
             current.Quantity = scenEqui.Quantity;
             current.LastModifiedById = scenEqui.LastModifiedBy.Id;
-            current.LastModified = DateTime.Now;
+            current.LastModified = DateTime.UtcNow.AddHours(7);
 
             _context.Entry(current).State = EntityState.Modified;
             _context.SaveChanges();
