@@ -12,6 +12,7 @@ using FilmManagement_BE.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using FilmManagement_BE.Constants;
+using FirebaseAdmin.Messaging;
 
 namespace FilmManagement_BE.Controllers
 {
@@ -60,7 +61,7 @@ namespace FilmManagement_BE.Controllers
         // PUT: api/Scenarios/5
         [HttpPut("/api/scenarios/{id}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
-        public IActionResult PutScenario(long id, ScenarioVModel scenario)
+        public async Task<IActionResult> PutScenario(long id, ScenarioVModel scenario) 
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             int userId;
@@ -74,8 +75,33 @@ namespace FilmManagement_BE.Controllers
             }
 
             var result = _service.UpdateScenario(scenario);
-            
-            if (result != null) return Ok();
+
+            if (result != null)
+            {
+                var listScenAc = _service.GetListActors(result.Id);
+                var listId = listScenAc.Select(record => (record.Account.Id ?? default));
+
+                var accountSerivce = new AccountService(_context);
+
+                var listToken = accountSerivce.GetListUserToken(listId);
+
+                var message = new MulticastMessage()
+                {
+                    Tokens = listToken,
+                    Data = new Dictionary<string, string>()
+                    {
+                        {"id", result.Id + "" },
+                        {"message", "Scenario " + result.Name + " has been updated!" }
+                    },
+                    Notification = new Notification()
+                    {
+                        Title = result.Name + " #" + result.Id,
+                        Body = "Scenario " + result.Name + " has been updated!"
+                    }
+                };
+                var response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                return Ok(response);
+            }
 
             return BadRequest("Cannot find object with ID: " + id);
         }

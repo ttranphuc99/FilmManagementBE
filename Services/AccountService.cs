@@ -37,6 +37,17 @@ namespace FilmManagement_BE.Services
             };
         }
 
+        public List<string> GetListUserToken(IEnumerable<int> listId)
+        {
+            return _context.Account
+                .Where(record => 
+                    listId.Contains(record.Id) 
+                    && record.DeviceToken != null
+                    && record.DeviceToken.Count() > 0)
+                .Select(record => record.DeviceToken)
+                .ToList();
+        }
+
         public AccountVModel Register(AccountVModel account)
         {
             AccountVModel result = null;

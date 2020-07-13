@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using FilmManagement_BE.Models;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 namespace FilmManagement_BE
 {
@@ -30,6 +32,11 @@ namespace FilmManagement_BE
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            FirebaseApp.Create(new AppOptions()
+            {
+                Credential = GoogleCredential.FromFile("./filmmanager-785d6-firebase-adminsdk-yrh9a-b7d5c49233.json"),
+            });
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

@@ -32,9 +32,21 @@ namespace FilmManagement_BE.Services
 
             if (dbAccount != null)
             {
-                dbAccount.DeviceToken = account.DeviceToken;
-                _context.Entry(dbAccount).State = EntityState.Modified;
-                _context.SaveChanges();
+                if (account.DeviceToken != null && account.DeviceToken.Count() > 0)
+                {
+                    dbAccount.DeviceToken = account.DeviceToken;
+                    _context.Entry(dbAccount).State = EntityState.Modified;
+
+                    var past = _context.Account.Where(record => record.DeviceToken == account.DeviceToken).ToList();
+
+                    foreach (var item in past)
+                    {
+                        item.DeviceToken = null;
+                        _context.Entry(item).State = EntityState.Modified;
+                    }
+
+                    _context.SaveChanges();
+                }
 
                 result = new AccountVModel()
                 {
