@@ -85,22 +85,26 @@ namespace FilmManagement_BE.Controllers
 
                 var listToken = accountSerivce.GetListUserToken(listId);
 
-                var message = new MulticastMessage()
+                if (listToken.Count() > 0)
                 {
-                    Tokens = listToken,
-                    Data = new Dictionary<string, string>()
+                    var message = new MulticastMessage()
                     {
-                        {"id", result.Id + "" },
-                        {"message", "Scenario " + result.Name + " has been updated!" }
-                    },
-                    Notification = new Notification()
-                    {
-                        Title = result.Name + " #" + result.Id,
-                        Body = "Scenario " + result.Name + " has been updated!"
-                    }
-                };
-                var response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
-                return Ok(response);
+                        Tokens = listToken,
+                        Data = new Dictionary<string, string>()
+                        {
+                            { "id", result.Id + "" },
+                            { "message", "Scenario " + result.Name + " has been updated!" }
+                        },
+                        Notification = new Notification()
+                        {
+                            Title = result.Name + " #" + result.Id,
+                            Body = "Scenario " + result.Name + " has been updated at " + DateTime.UtcNow.AddHours(7)
+                        }
+                    };
+                    var response = await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                    return Ok(response);
+                }
+                return Ok();
             }
 
             return BadRequest("Cannot find object with ID: " + id);
