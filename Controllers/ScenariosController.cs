@@ -158,7 +158,7 @@ namespace FilmManagement_BE.Controllers
 
         [HttpPost("/api/scenarios/{scenId}/actors/{actorId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
-        public ActionResult AddActorToScen(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)
+        public async Task<ActionResult> AddActorToScen(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)
         {
             scenAcc.Account = new AccountVModel() { Id = actorId };
             scenAcc.Scenario = new ScenarioVModel() { Id = scenId };
@@ -188,10 +188,10 @@ namespace FilmManagement_BE.Controllers
                         Notification = new Notification()
                         {
                             Title = scenAcc.Scenario.Name + " #" + scenAcc.Scenario.Id,
-                            Body = "You has has been add to scenario " + scenAcc.Scenario.Name +" at " + DateTime.UtcNow.AddHours(7)
+                            Body = "You has been add to scenario " + scenAcc.Scenario.Name +" at " + DateTime.UtcNow.AddHours(7)
                         }
                     };
-                    FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                    await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
                 }
                 return Created("", scenAcc);
             }
@@ -201,7 +201,7 @@ namespace FilmManagement_BE.Controllers
 
         [HttpPut("/api/scenarios/{scenId}/actors/{actorId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
-        public ActionResult EditCharacter(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)
+        public async Task<ActionResult> EditCharacter(long scenId, int actorId, [FromBody] ScenarioAccountVModel scenAcc)
         {
             scenAcc.Account = new AccountVModel() { Id = actorId };
             scenAcc.Scenario = new ScenarioVModel() { Id = scenId };
@@ -212,8 +212,30 @@ namespace FilmManagement_BE.Controllers
 
             scenAcc.LastModifiedBy = new AccountVModel() { Id = userId };
 
-            if (_service.ChangeCharacterForActor(scenAcc))
+            scenAcc = _service.ChangeCharacterForActor(scenAcc);
+            if (scenAcc != null)
             {
+                var accountSerivce = new AccountService(_context);
+
+                var listToken = accountSerivce.GetListUserToken(new List<int>() { actorId });
+
+                if (listToken.Count() > 0)
+                {
+                    var message = new MulticastMessage()
+                    {
+                        Tokens = listToken,
+                        Data = new Dictionary<string, string>()
+                        {
+                            { "message", "You has has been update" }
+                        },
+                        Notification = new Notification()
+                        {
+                            Title = scenAcc.Scenario.Name + " #" + scenAcc.Scenario.Id,
+                            Body = "Your role has been updated in scenario " + scenAcc.Scenario.Name + " at " + DateTime.UtcNow.AddHours(7)
+                        }
+                    };
+                    await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                }
                 return Ok(scenAcc);
             }
 
@@ -222,7 +244,7 @@ namespace FilmManagement_BE.Controllers
 
         [HttpDelete("/api/scenarios/{scenId}/actors/{actorId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleConstants.DIRECTOR_STR)]
-        public ActionResult DeleteCharacter(long scenId, int actorId)
+        public async Task<ActionResult> DeleteCharacter(long scenId, int actorId)
         {
             var scenAcc = new ScenarioAccountVModel();
             scenAcc.Account = new AccountVModel() { Id = actorId };
@@ -247,10 +269,10 @@ namespace FilmManagement_BE.Controllers
                         Notification = new Notification()
                         {
                             Title = scenAcc.Scenario.Name + " #" + scenAcc.Scenario.Id,
-                            Body = "You has has been removed from scenario " + scenAcc.Scenario.Name + " at " + DateTime.UtcNow.AddHours(7)
+                            Body = "You has been removed from scenario " + scenAcc.Scenario.Name + " at " + DateTime.UtcNow.AddHours(7)
                         }
                     };
-                    FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
+                    await FirebaseMessaging.DefaultInstance.SendMulticastAsync(message);
                 }
                 return Ok(scenAcc);
             }

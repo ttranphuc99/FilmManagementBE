@@ -166,6 +166,11 @@ namespace FilmManagement_BE.Services
             _context.ScenarioAccountDetail.Add(model);
             _context.SaveChanges();
 
+            model = _context.ScenarioAccountDetail
+                .Include(record => record.Scenario)
+                .Where(record => record.AccountId == scenAcc.Account.Id && record.ScenarioId == scenAcc.Scenario.Id)
+                .FirstOrDefault();
+
             var vmodel = new ScenarioAccountVModel()
             {
                 Account = model.Account != null ? new AccountVModel()
@@ -199,16 +204,17 @@ namespace FilmManagement_BE.Services
             return vmodel;
         }
 
-        public bool ChangeCharacterForActor(ScenarioAccountVModel scenAcc)
+        public ScenarioAccountVModel ChangeCharacterForActor(ScenarioAccountVModel scenAcc)
         {
             var check = _context.ScenarioAccountDetail
+                .Include(record => record.Scenario)
                 .Where(
                     record =>
                         record.AccountId == scenAcc.Account.Id
                         && record.ScenarioId == scenAcc.Scenario.Id
                 ).FirstOrDefault();
 
-            if (check == null) return false;
+            if (check == null) return null;
 
             check.Characters = scenAcc.Characters;
             check.LastModified = DateTime.UtcNow.AddHours(7);
@@ -216,12 +222,15 @@ namespace FilmManagement_BE.Services
 
             _context.Entry(check).State = EntityState.Modified;
             _context.SaveChanges();
-            return true;
+
+            scenAcc.Scenario = this.ParseToVModel(new List<Scenario>() { check.Scenario }).FirstOrDefault();
+            return scenAcc;
         }
 
         public ScenarioAccountVModel RemoveActorFromScenario(ScenarioAccountVModel scenAcc)
         {
             var model = _context.ScenarioAccountDetail
+                .Include(record => record.Scenario)
                 .Where(
                     record =>
                         record.AccountId == scenAcc.Account.Id
